@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Available Tables</h1>
+<div class="card-container">
+    {% for table in tables %}
+        <div class="card">
+            <h2>{{ table }}</h2>
+            <p><a href="/table/{{ table }}">Просмотреть</a></p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

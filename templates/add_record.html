@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Добавление записи в таблицу: {{ table_name }}</h1>
+
+<form method="post">
+    {% for column in columns %}
+        <div class="form-group">
+            <label for="{{ column }}">{{ column }}</label>
+            <input type="text" class="form-control" id="{{ column }}" name="{{ column }}">
+        </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Добавить</button>
+</form>
+{% endblock %}
