@@ -10,11 +10,9 @@
             height: 100%;
             width: 250px;
             position: fixed;
-            top: 0;
             top: 64px; /* Позиция вертикального меню, чтобы оно не перекрывало заголовок */
             left: 0;
             background-color: #f4f4f4;
-            padding-top: 64px; /* Добавлено для увеличения отступа */
         }
         
         .content-container {
@@ -36,6 +34,7 @@
         <div class="row">
             <div class="col-md-3 sidebar">
                 <ul class="list-group">
+                    <h3>Доступные таблицы</h3>
                     {% for table in tables %}
                         <li class="list-group-item"><a href="{{ url_for('table_data', table_name=table) }}">{{ table }}</a></li>
                     {% endfor %}

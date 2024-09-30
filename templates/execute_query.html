@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Выполнить SQL-запрос</h1>
+<form method="post">
+    {% csrf_token %}
+    <textarea name="query" rows="10" cols="50" placeholder="Введите ваш SQL-запрос"></textarea><br>
+    <button type="submit">Выполнить</button>
+</form>
+
+{% if result %}
+<h2>Результат выполнения:</h2>
+<pre>{{ result }}</pre>
+{% endif %}
+{% endblock %}
