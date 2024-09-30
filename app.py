@@ -76,6 +76,33 @@ def add_record(table_name):
         if conn is not None:
             conn.close()
 
+@app.route('/edit_record/<string:table_name>/<int:record_id>', methods=['GET', 'POST'])
+def edit_record(table_name, record_id):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+
+        if request.method == 'POST':
+            values = tuple(request.form.values())
+
+            # Строим SQL-запрос для обновления записи
+            set_clause = ', '.join([f"{column} = %s" for column in request.form.keys()])
+            query = f"UPDATE {table_name} SET {set_clause} WHERE id = %s"
+            cur.execute(query, values + (record_id,))
+            conn.commit()
+            return redirect(url_for('table_data', table_name=table_name))
+
+        # Получаем данные записи для редактирования
+        cur.execute(f'SELECT * FROM {table_name} WHERE id = %s', (record_id,))
+        row = cur.fetchone()
+        cur.execute(f'SELECT column_name FROM information_schema.columns WHERE table_name = %s', (table_name,))
+        columns = [row[0] for row in cur.fetchall()]
+
+        return render_template('edit_record.html', table_name=table_name, record_id=record_id, columns=columns, row=row)
+    finally:
+        if conn is not None:
+            conn.close()
+
 # Запуск приложения
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port = 5000)
