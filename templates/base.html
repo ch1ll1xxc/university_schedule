@@ -1,25 +1,54 @@
+<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>University Schedule</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        .sidebar {
+            height: 100%;
+            width: 250px;
+            position: fixed;
+            top: 0;
+            top: 64px; /* Позиция вертикального меню, чтобы оно не перекрывало заголовок */
+            left: 0;
+            background-color: #f4f4f4;
+            padding-top: 64px; /* Добавлено для увеличения отступа */
         }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            padding: 20px;
+        
+        .content-container {
+            margin-left: 250px; /* Правый маржин для содержимого, чтобы оно не перекрывалось сайдбаром */
         }
-        h1 {
-            text-align: center;
+
+        .content-container > * {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        {% block content %}{% endblock %}
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="/">University Schedule</a>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 sidebar">
+                <ul class="list-group">
+                    {% for table in tables %}
+                        <li class="list-group-item"><a href="{{ url_for('table_data', table_name=table) }}">{{ table }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="col-md-9 content-container">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
     </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 </body>
 </html>
