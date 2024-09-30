@@ -103,6 +103,37 @@ def edit_record(table_name, record_id):
         if conn is not None:
             conn.close()
 
+@app.route('/delete_record/<string:table_name>/<int:record_id>', methods=['GET', 'POST'])
+def delete_record(table_name, record_id):
+    if request.method == 'POST':
+        confirm_delete = request.form.get('confirm_delete')
+        if confirm_delete == 'yes':
+            conn = get_db_connection()
+            try:
+                cur = conn.cursor()
+                query = f"DELETE FROM {table_name} WHERE id = %s"
+                cur.execute(query, (record_id,))
+                conn.commit()
+                return redirect(url_for('table_data', table_name=table_name))
+            except psycopg2.Error as e:
+                print(f"Ошибка при удалении записи: {e}")
+                return render_template('error.html', message=f"Ошибка при удалении записи из таблицы '{table_name}': {e}")
+            finally:
+                if cur is not None:
+                    cur.close()
+                if conn is not None:
+                    conn.close()
+
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(f'SELECT * FROM {table_name} WHERE id = %s', (record_id,))
+        row = cur.fetchone()
+        return render_template('delete_record.html', table_name=table_name, record_id=record_id, row=row)
+    finally:
+        if conn is not None:
+            conn.close()
+
 # Запуск приложения
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port = 5000)

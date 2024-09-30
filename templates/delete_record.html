@@ -1,13 +1,16 @@
-<!-- Страница удаления записи -->
-{% extends 'base.html' %}
-
-{% block content %}
-<h1>Удаление записи из таблицы {{ table_name }}</h1>
-<p>Вы уверены, что хотите удалить запись с ID {{ record_id }}?</p>
-
-<form action="{{ url_for('delete_record', table_name=table_name, record_id=record_id) }}" method="POST">
-    <button type="submit">Удалить</button>
-    <a href="{{ url_for('table_data', table_name=table_name) }}">Отмена</a>
-</form>
-
-{% endblock %}
+<!-- templates/delete_record.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delete Record</title>
+</head>
+<body>
+    <h1>Confirm Deletion</h1>
+    <p>Are you sure you want to delete this record?</p>
+    <form action="/delete_record/{{ table_name }}/{{ record_id }}" method="POST">
+        <button type="submit" name="confirm_delete" value="yes">Yes</button>
+        <a href="{{ url_for('table_data', table_name=table_name) }}">No</a>
+    </form>
+</body>
+</html>
