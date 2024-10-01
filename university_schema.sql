@@ -1,3 +1,10 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('student', 'teacher', 'admin') NOT NULL DEFAULT 'student'
+);
+
 CREATE TABLE timepair (
   id SERIAL PRIMARY KEY,
   start_pair TIME NOT NULL,
@@ -43,7 +50,7 @@ CREATE TABLE schedule (
 );
 
 -- Вставка данных в таблицу Timepair
-INSERT INTO Timepair (id, start_pair, end_pair) VALUES 
+INSERT INTO Timepair (id, start_pair, end_pair) VALUES
 (1, '09:00', '10:30'),
 (2, '10:40', '12:10'),
 (3, '12:40', '14:10'),
@@ -52,7 +59,7 @@ INSERT INTO Timepair (id, start_pair, end_pair) VALUES
 (6, '18:00', '19:30');
 
 -- Вставка данных в таблицу Teacher
-INSERT INTO Teacher (id, full_name) VALUES 
+INSERT INTO Teacher (id, full_name) VALUES
 (1, 'Иванов Иван'),
 (2, 'Петров Петр Петрович'),
 (3, 'Ермаков Сергей Романович'),
