@@ -1,9 +1,12 @@
 {% extends 'base.html' %}
 
+{% block tables %}
+    {% set tables = ['class', 'schedule', 'student', 'student_in_class', 'timepair', 'subject', 'teacher'] %} <!-- Вставьте ваши таблицы здесь -->
+{% endblock tables %}
+
 {% block content %}
 <h1>Поиск данных</h1>
-<form method="get" action="{% url 'search' %}">
-    {% csrf_token %}
+<form method="get" action="{{ url_for('search') }}">
     <input type="text" name="query" placeholder="Введите поисковый запрос">
     <button type="submit">Найти</button>
 </form>

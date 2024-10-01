@@ -134,7 +134,99 @@ def delete_record(table_name, record_id):
         if conn is not None:
             conn.close()
 
+@app.route('/generate_schedule', methods=['GET'])
+def generate_schedule():
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        query = """
+        SELECT 
+            date, 
+            class.name AS group_name, 
+            number_pair, 
+            subject.name AS subject_name, 
+            teacher.full_name AS teacher_name, 
+            classroom
+        FROM schedule
+        JOIN class ON schedule.class_id = class.id
+        JOIN subject ON schedule.subject_id = subject.id
+        JOIN teacher ON schedule.teacher_id = teacher.id
+        ORDER BY date, number_pair;
+        """
+        cur.execute(query)
+        rows = cur.fetchall()
+        columns = [desc[0] for desc in cur.description]
+        return render_template('schedule_table.html', rows=rows, columns=columns)
+    finally:
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
+
+@app.route('/execute_query', methods=['GET', 'POST'])
+def execute_query():
+    if request.method == 'POST':
+        query = request.form['query']
+        
+        conn = get_db_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(query)
+            
+            # Fetch all results (adjust this based on your needs)
+            result = cur.fetchall()
+            column_names = [desc[0] for desc in cur.description]
+            
+            return render_template('execute_query.html', query=query, results=result, columns=column_names)
+        except psycopg2.Error as e:
+            print(f"Ошибка при выполнении запроса: {e}")
+            return render_template('error.html', message=f"Ошибка при выполнении запроса: {e}")
+        finally:
+            if cur is not None:
+                cur.close()
+            if conn is not None:
+                conn.close()
+
+    return render_template('execute_query.html')
+
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('query')
+    # Здесь добавьте логику для поиска по нескольким параметрам
+    # Например, выполните SQL-запрос с использованием LIKE для поиска
+    return render_template('search_record.html', results=results, columns=columns)
+
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('query')
+    # Разделяем запрос на отдельные параметры
+    search_terms = query.split()  # Разделяем по пробелам
+    if not search_terms:
+        return render_template('search_record.html', results=[], columns=[])
+
+    # Формируем SQL-запрос
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        # Пример запроса, замените 'your_table' и 'your_column' на реальные значения
+        sql_query = "SELECT * FROM your_table WHERE " + " OR ".join(
+            [f"your_column LIKE %s" for _ in search_terms]
+        )
+        # Подготовка параметров для запроса
+        params = [f"%{term}%" for term in search_terms]
+        cur.execute(sql_query, params)
+        results = cur.fetchall()
+        columns = [desc[0] for desc in cur.description]
+        return render_template('search_record.html', results=results, columns=columns)
+    except psycopg2.Error as e:
+        print(f"Ошибка при выполнении запроса: {e}")
+        return render_template('error.html', message=f"Ошибка при выполнении запроса: {e}")
+    finally:
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
+
 # Запуск приложения
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port = 5000)
-    

@@ -30,22 +30,6 @@
         <a class="navbar-brand" href="/">University Schedule</a>
     </nav>
 
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-3 sidebar">
-                <ul class="list-group">
-                    <h3>Доступные таблицы</h3>
-                    {% for table in tables %}
-                        <li class="list-group-item"><a href="{{ url_for('table_data', table_name=table) }}">{{ table }}</a></li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="col-md-9 content-container">
-                {% block content %}{% endblock %}
-            </div>
-        </div>
-    </div>
-
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>

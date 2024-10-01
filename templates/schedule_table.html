@@ -1,0 +1,49 @@
+<!-- templates/schedule_table.html -->
+{% extends 'base.html' %}
+
+{% block tables %}
+    {% set tables = ['class', 'schedule', 'student', 'student_in_class', 'timepair', 'subject', 'teacher'] %} <!-- Вставьте ваши таблицы здесь -->
+{% endblock tables %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 sidebar">
+                <ul class="list-group">
+                    <h3>Доступные таблицы</h3>
+                    {% for table in tables %}
+                        <li class="list-group-item"><a href="{{ url_for('table_data', table_name=table) }}">{{ table }}</a></li>
+                    {% endfor %}
+                </ul>
+                <div class="list-group">
+                    <h4>Управление данными</h4>
+                    <li class="list-group-item"><a href="{{ url_for('execute_query') }}">Выполнить SQL-запрос</a></li>
+                    <h4>Предварительный просмотр</h4>
+                    <li class="list-group-item"><a href="{{ url_for('generate_schedule') }}">Просмотреть расписание</a></li>
+                </div>
+            </div>
+            <div class="col-md-9 content-container">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    <h2>Расписание</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                {% for column in columns %}
+                    <th>{{ column }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    {% for cell in row %}
+                        <td>{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock content %}

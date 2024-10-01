@@ -1,23 +1,43 @@
+<!-- templates/table_data.html -->
 {% extends 'base.html' %}
 
-{% block content %}
-<h1>Table: {{ table_name }}</h1>
-<table border="1">
-    <tr>
-        {% for column in columns %}
-            <th>{{ column }}</th>
-        {% endfor %}
-    </tr>
-    {% for row in rows %}
-        <tr>
-            {% for cell in row %}
-                <td>{{ cell }}</td>
-            {% endfor %}
-            <td class="edit_record"><a href="{{ url_for('edit_record', table_name=table_name, record_id=row[0]) }}">Редактировать</a></td>  <!-- Изменено здесь -->
-            <td class="delete_record"><a href="{{ url_for('delete_record', table_name=table_name, record_id=row[0]) }}">Удалить</a></td>
-        </tr>
-    {% endfor %}
-</table>
+{% block tables %}
+    {% set tables = ['class', 'schedule', 'student', 'student_in_class', 'timepair', 'subject', 'teacher'] %} <!-- Вставьте ваши таблицы здесь -->
+{% endblock tables %}
 
-<button onclick="window.location.href='/add_record/{{ table_name }}'">Добавить запись</button>
-{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3 sidebar">
+            <ul class="list-group">
+                <h3>Доступные таблицы</h3>
+                {% for table in tables %}
+                    <li class="list-group-item"><a href="{{ url_for('table_data', table_name=table) }}">{{ table }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-md-9 content-container">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</div>
+    <h2>Таблица: {{ table_name }}</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                {% for column in columns %}
+                    <th>{{ column }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    {% for cell in row %}
+                        <td>{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock content %}
