@@ -25,10 +25,31 @@ def index():
         return "Database connection failed", 500
     try:
         cur = conn.cursor()
+        
+        # Получаем полное расписание
+        query = """
+        SELECT 
+            date, 
+            class.name AS group_name, 
+            number_pair, 
+            subject.name AS subject_name, 
+            teacher.full_name AS teacher_name, 
+            classroom
+        FROM schedule
+        JOIN class ON schedule.class_id = class.id
+        JOIN subject ON schedule.subject_id = subject.id
+        JOIN teacher ON schedule.teacher_id = teacher.id
+        ORDER BY date, number_pair;
+        """
+        cur.execute(query)
+        schedule_rows = cur.fetchall()
+        schedule_columns = [desc[0] for desc in cur.description]
+
+        # Получаем доступные таблицы
         cur.execute('SELECT tablename FROM pg_tables WHERE schemaname = \'public\';')
         tables = [row[0] for row in cur.fetchall()]
-        cur.close()
-        return render_template('index.html', tables=tables)
+        
+        return render_template('index.html', tables=tables, schedule_rows=schedule_rows, schedule_columns=schedule_columns)
     finally:
         if conn is not None:
             conn.close()
