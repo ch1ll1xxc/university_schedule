@@ -1,31 +1,68 @@
 {% extends 'base.html' %}
 
 {% block tables %}
-    {% set tables = ['class', 'schedule', 'student', 'student_in_class', 'timepair', 'subject', 'teacher'] %} <!-- Вставьте ваши таблицы здесь -->
+    {% set tables = ['class', 'schedule', 'student', 'student_in_class', 'timepair', 'subject', 'teacher'] %}
 {% endblock tables %}
 
 {% block content %}
-<h1>Поиск данных</h1>
-<form method="get" action="{{ url_for('search') }}">
-    <input type="text" name="query" placeholder="Введите поисковый запрос">
-    <button type="submit">Найти</button>
-</form>
+<div class="container-fluid">
+    <div class="row">
+        <div class="sidebar">
+            <ul class="list-group">
+                <h3>Доступные таблицы</h3>
+                <li class="list-group-item"><a href="/table/class">Классы</a></li>
+                <li class="list-group-item"><a href="/table/schedule">Расписание</a></li>
+                <li class="list-group-item"><a href="/table/student">Студенты</a></li>
+                <li class="list-group-item"><a href="/table/student_in_class">Студенты в классах</a></li>
+                <li class="list-group-item"><a href="/table/timepair">Пары</a></li>
+                <li class="list-group-item"><a href="/table/subject">Предметы</a></li>
+                <li class="list-group-item"><a href="/table/teacher">Преподаватели</a></li>
+            </ul>
+            <div class="list-group">
+                <h4>Управление данными</h4>
+                <li class="list-group-item"><a href="{{ url_for('execute_query') }}">Выполнить SQL-запрос</a></li>
+                <li class="list-group-item"><a href="{{ url_for('index') }}">На главную страницу</a></li>
+            </div>
+        </div>
+        <div class="col-md-9 content-container">
+            <h1>Поиск данных</h1>
+            <form method="POST">
+                <label for="full_name">Имя:</label>
+                <input type="text" id="full_name" name="full_name"><br><br>
 
-{% if results %}
-<h2>Результаты поиска:</h2>
-<table border="1">
-    <tr>
-        {% for column in columns %}
-            <th>{{ column }}</th>
-        {% endfor %}
-    </tr>
-    {% for row in results %}
-        <tr>
-            {% for cell in row %}
-                <td>{{ cell }}</td>
-            {% endfor %}
-        </tr>
-    {% endfor %}
-</table>
-{% endif %}
+                <label for="birthday">Дата рождения:</label>
+                <input type="date" id="birthday" name="birthday"><br><br>
+
+                <label for="address">Адрес:</label>
+                <input type="text" id="address" name="address"><br><br>
+
+                <button type="submit">Поиск</button>
+            </form>
+
+            {% if results %}
+                <h2>Результаты поиска:</h2>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            {% for column in columns %}
+                                <th>{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results %}
+                            <tr>
+                                {% for value in row %}
+                                    <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Нет результатов для отображения.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -29,6 +29,30 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="/">University Schedule</a>
     </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="sidebar">
+                <ul class="list-group">
+                    <h3>Доступные таблицы</h3>
+                    <li class="list-group-item"><a href="/table/class">Классы</a></li>
+                    <li class="list-group-item"><a href="/table/schedule">Расписание</a></li>
+                    <li class="list-group-item"><a href="/table/student">Студенты</a></li>
+                    <li class="list-group-item"><a href="/table/student_in_class">Студенты в классах</a></li>
+                    <li class="list-group-item"><a href="/table/timepair">Пары</a></li>
+                    <li class="list-group-item"><a href="/table/subject">Предметы</a></li>
+                    <li class="list-group-item"><a href="/table/teacher">Преподаватели</a></li>
+                </ul>
+                <div class="list-group">
+                    <h4>Управление данными</h4>
+                    <li class="list-group-item"><a href="{{ url_for('execute_query') }}">Выполнить SQL-запрос</a></li>
+                    <li class="list-group-item"><a href="{{ url_for('search') }}">Поиск записи</a></li>
+                </div>
+            </div>
+            <div class="col-md-9 content-container">
+                {% block insidecontent %}{% endblock insidecontent%}
+            </div>
+        </div>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>

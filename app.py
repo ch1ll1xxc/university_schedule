@@ -5,13 +5,18 @@ app = Flask(__name__)
 
 # Функция для подключения к базе данных
 def get_db_connection():
-    conn = psycopg2.connect(
-        host='db',  # Используем имя сервиса из docker-compose.yml
-        database='university_schedule',
-        user='mireadmin',
-        password='ch1ll1xxc'
-    )
-    return conn
+    try:
+        conn = psycopg2.connect(
+            host='db',  # Используем имя сервиса из docker-compose.yml
+            database='university_schedule',
+            user='mireadmin',
+            password='ch1ll1xxc'
+        )
+        print("Подключение к базе данных успешно.")
+        return conn
+    except Exception as e:
+        print(f"Ошибка подключения к базе данных: {e}")
+        return None
 
 @app.route('/')
 def index():
@@ -31,6 +36,8 @@ def index():
 @app.route('/table/<string:table_name>')
 def table_data(table_name):
     conn = get_db_connection()
+    if conn is None:
+        return "Database connection failed", 500
     try:
         cur = conn.cursor()
         cur.execute(f'SELECT column_name FROM information_schema.columns WHERE table_name = %s', (table_name,))
@@ -38,6 +45,7 @@ def table_data(table_name):
 
         cur.execute(f'SELECT * FROM {table_name}')
         rows = cur.fetchall()
+        print(f"Данные из таблицы {table_name}: {rows}")  # Отладочное сообщение
         return render_template('table_data.html', table_name=table_name, columns=columns, rows=rows)
     finally:
         if conn is not None:
@@ -189,44 +197,39 @@ def execute_query():
 
     return render_template('execute_query.html')
 
-@app.route('/search', methods=['GET'])
+@app.route('/search', methods=['GET', 'POST'])
 def search():
-    query = request.args.get('query')
-    # Здесь добавьте логику для поиска по нескольким параметрам
-    # Например, выполните SQL-запрос с использованием LIKE для поиска
+    results = []
+    columns = []
+    
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        birthday = request.form.get('birthday')
+        address = request.form.get('address')
+
+        # Создаем базовый SQL-запрос
+        sql_query = "SELECT * FROM student WHERE TRUE"
+        params = []
+
+        # Добавляем условия поиска
+        if full_name:
+            sql_query += " AND full_name ILIKE %s"
+            params.append(f"%{full_name}%")
+        if birthday:
+            sql_query += " AND birthday = %s"
+            params.append(birthday)
+        if address:
+            sql_query += " AND address ILIKE %s"
+            params.append(f"%{address}%")
+
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute(sql_query, params)
+            results = cur.fetchall()
+            columns = [desc[0] for desc in cur.description]
+
     return render_template('search_record.html', results=results, columns=columns)
-
-@app.route('/search', methods=['GET'])
-def search():
-    query = request.args.get('query')
-    # Разделяем запрос на отдельные параметры
-    search_terms = query.split()  # Разделяем по пробелам
-    if not search_terms:
-        return render_template('search_record.html', results=[], columns=[])
-
-    # Формируем SQL-запрос
-    conn = get_db_connection()
-    try:
-        cur = conn.cursor()
-        # Пример запроса, замените 'your_table' и 'your_column' на реальные значения
-        sql_query = "SELECT * FROM your_table WHERE " + " OR ".join(
-            [f"your_column LIKE %s" for _ in search_terms]
-        )
-        # Подготовка параметров для запроса
-        params = [f"%{term}%" for term in search_terms]
-        cur.execute(sql_query, params)
-        results = cur.fetchall()
-        columns = [desc[0] for desc in cur.description]
-        return render_template('search_record.html', results=results, columns=columns)
-    except psycopg2.Error as e:
-        print(f"Ошибка при выполнении запроса: {e}")
-        return render_template('error.html', message=f"Ошибка при выполнении запроса: {e}")
-    finally:
-        if cur is not None:
-            cur.close()
-        if conn is not None:
-            conn.close()
 
 # Запуск приложения
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port = 5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)

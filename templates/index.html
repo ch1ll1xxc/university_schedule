@@ -1,37 +1,31 @@
 {% extends 'base.html' %}
 
-{% block tables %}
-    {% set tables = ['class', 'schedule', 'student', 'student_in_class', 'timepair', 'subject', 'teacher'] %} <!-- Вставьте ваши таблицы здесь -->
-{% endblock tables %}
-
 {% block content %}
 <h1>Available Tables</h1>
-<div class="card-container">
-    {% for table in tables %}
-        <div class="card">
-            <h2>{{ table }}</h2>
-            <p><a href="/table/{{ table }}">Просмотреть</a></p>
-        </div>
-    {% endfor %}
-</div>
 <div class="container-fluid">
     <div class="row">
-        <div class="col-md-3 sidebar">
+        <div class="sidebar">
             <ul class="list-group">
                 <h3>Доступные таблицы</h3>
-                {% for table in tables %}
-                    <li class="list-group-item"><a href="{{ url_for('table_data', table_name=table) }}">{{ table }}</a></li>
-                {% endfor %}
+                <li class="list-group-item"><a href="/table/class">Классы</a></li>
+                <li class="list-group-item"><a href="/table/schedule">Расписание</a></li>
+                <li class="list-group-item"><a href="/table/student">Студенты</a></li>
+                <li class="list-group-item"><a href="/table/student_in_class">Студенты в классах</a></li>
+                <li class="list-group-item"><a href="/table/timepair">Пары</a></li>
+                <li class="list-group-item"><a href="/table/subject">Предметы</a></li>
+                <li class="list-group-item"><a href="/table/teacher">Преподаватели</a></li>
             </ul>
             <div class="list-group">
                 <h4>Управление данными</h4>
                 <li class="list-group-item"><a href="{{ url_for('execute_query') }}">Выполнить SQL-запрос</a></li>
-                <h4>Предварительный просмотр</h4>
-                <li class="list-group-item"><a href="{{ url_for('generate_schedule') }}">Просмотреть расписание</a></li>
+                <li class="list-group-item"><a href="{{ url_for('search') }}">Поиск записи</a></li>
             </div>
         </div>
         <div class="col-md-9 content-container">
-            {% block content %}{% endblock %}
+            {% block insidecontent %}
+                <h2>Добро пожаловать, администратор!</h2>
+                <p>Вы можете управлять данными и просматривать полное расписание.</p>
+            {% endblock %}
         </div>
     </div>
 </div>
