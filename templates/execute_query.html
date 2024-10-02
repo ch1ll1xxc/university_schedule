@@ -1,16 +1,41 @@
 {% extends 'base.html' %}
 
-{% block tables %}
-    {% set tables = ['class', 'schedule', 'student', 'student_in_class', 'timepair', 'subject', 'teacher'] %} <!-- Вставьте ваши таблицы здесь -->
-{% endblock tables %}
-
-{% block content %}
+{% block insidecontent %}
 <h1>Выполнение SQL-запроса</h1>
 <form method="post" action="/execute_query">
     <textarea name="query" rows="10" cols="50" required placeholder="Введите ваш SQL-запрос здесь..."></textarea><br>
     <button type="submit">Запустить запрос</button>
 </form>
+<div class="col-md-9 content-container">
+    <div class="result-container" id="result-container">
+        {% if results and columns %}
+            <h2>Результаты запроса:</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        {% for column in columns %}
+                            <th>{{ column }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                        <tr>
+                            {% for value in row %}
+                                <td>{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Результаты отсутствуют.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock insidecontent %}
 
+{% block sidecontent %}
 <div class="container-fluid">
     <div class="row">
         <div class="sidebar">
@@ -28,33 +53,6 @@
                 <h4>Управление данными</h4>
                 <li class="list-group-item"><a href="{{ url_for('search') }}">Поиск записи</a></li>
                 <li class="list-group-item"><a href="{{ url_for('index') }}">На главную страницу</a></li>
-            </div>
-        </div>
-        <div class="col-md-9 content-container">
-            <div class="result-container" id="result-container">
-                {% if results and columns %}
-                    <h2>Результаты запроса:</h2>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                {% for column in columns %}
-                                    <th>{{ column }}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in results %}
-                                <tr>
-                                    {% for value in row %}
-                                        <td>{{ value }}</td>
-                                    {% endfor %}
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>Результаты отсутствуют.</p>
-                {% endif %}
             </div>
         </div>
     </div>

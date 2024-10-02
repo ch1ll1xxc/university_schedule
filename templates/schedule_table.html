@@ -2,10 +2,10 @@
 {% extends 'base.html' %}
 
 {% block tables %}
-    {% set tables = ['class', 'schedule', 'student', 'student_in_class', 'timepair', 'subject', 'teacher'] %} <!-- Вставьте ваши таблицы здесь -->
+    {% set tables = ['class', 'schedule', 'student', 'student_in_class', 'timepair', 'subject', 'teacher'] %}
 {% endblock tables %}
 
-{% block content %}
+{% block insidecontent %}
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-3 sidebar">
@@ -23,27 +23,26 @@
                 </div>
             </div>
             <div class="col-md-9 content-container">
-                {% block content %}{% endblock %}
+                <h2>Расписание</h2>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            {% for column in columns %}
+                                <th>{{ column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                {% for cell in row %}
+                                    <td>{{ cell }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-    <h2>Расписание</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                {% for column in columns %}
-                    <th>{{ column }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in rows %}
-                <tr>
-                    {% for cell in row %}
-                        <td>{{ cell }}</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% endblock content %}
+{% endblock %}
