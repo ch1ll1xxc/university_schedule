@@ -25,31 +25,9 @@ def index():
         return "Database connection failed", 500
     try:
         cur = conn.cursor()
-        
-        # Получаем полное расписание
-        query = """
-        SELECT 
-            date, 
-            class.name AS group_name, 
-            number_pair, 
-            subject.name AS subject_name, 
-            teacher.full_name AS teacher_name, 
-            classroom
-        FROM schedule
-        JOIN class ON schedule.class_id = class.id
-        JOIN subject ON schedule.subject_id = subject.id
-        JOIN teacher ON schedule.teacher_id = teacher.id
-        ORDER BY date, number_pair;
-        """
-        cur.execute(query)
-        schedule_rows = cur.fetchall()
-        schedule_columns = [desc[0] for desc in cur.description]
-
-        # Получаем доступные таблицы
         cur.execute('SELECT tablename FROM pg_tables WHERE schemaname = \'public\';')
         tables = [row[0] for row in cur.fetchall()]
-        
-        return render_template('index.html', tables=tables, schedule_rows=schedule_rows, schedule_columns=schedule_columns)
+        return render_template('index.html', tables=tables)
     finally:
         if conn is not None:
             conn.close()
@@ -63,10 +41,8 @@ def table_data(table_name):
         cur = conn.cursor()
         cur.execute(f'SELECT column_name FROM information_schema.columns WHERE table_name = %s', (table_name,))
         columns = [row[0] for row in cur.fetchall()]
-
         cur.execute(f'SELECT * FROM {table_name}')
         rows = cur.fetchall()
-        print(f"Данные из таблицы {table_name}: {rows}")  # Отладочное сообщение
         return render_template('table_data.html', table_name=table_name, columns=columns, rows=rows)
     finally:
         if conn is not None:
@@ -76,25 +52,22 @@ def table_data(table_name):
 def add_record(table_name):
     if request.method == 'POST':
         conn = get_db_connection()
+        if conn is None:
+            return "Database connection failed", 500
         try:
             cur = conn.cursor()
             values = tuple(request.form.values())
-
-            # Строим SQL-запрос для добавления записи
             query = f"INSERT INTO {table_name} VALUES ({', '.join(['%s'] * len(values))})"
             cur.execute(query, values)
             conn.commit()
+            return redirect(url_for('table_data', table_name=table_name))
         except psycopg2.Error as e:
-            print(f"Ошибка при добавлении записи: {e}")
-            return render_template('error.html', message=f"Ошибка при добавлении записи в таблицу '{table_name}': {e}")
+            return render_template('error.html', message=f"Ошибка при добавлении записи: {e}")
         finally:
             if cur is not None:
                 cur.close()
             if conn is not None:
                 conn.close()
-
-        return redirect(url_for('table_data', table_name=table_name))
-    
     conn = get_db_connection()
     try:
         cur = conn.cursor()
@@ -108,25 +81,21 @@ def add_record(table_name):
 @app.route('/edit_record/<string:table_name>/<int:record_id>', methods=['GET', 'POST'])
 def edit_record(table_name, record_id):
     conn = get_db_connection()
+    if conn is None:
+        return "Database connection failed", 500
     try:
         cur = conn.cursor()
-
         if request.method == 'POST':
             values = tuple(request.form.values())
-
-            # Строим SQL-запрос для обновления записи
             set_clause = ', '.join([f"{column} = %s" for column in request.form.keys()])
             query = f"UPDATE {table_name} SET {set_clause} WHERE id = %s"
             cur.execute(query, values + (record_id,))
             conn.commit()
             return redirect(url_for('table_data', table_name=table_name))
-
-        # Получаем данные записи для редактирования
         cur.execute(f'SELECT * FROM {table_name} WHERE id = %s', (record_id,))
         row = cur.fetchone()
         cur.execute(f'SELECT column_name FROM information_schema.columns WHERE table_name = %s', (table_name,))
         columns = [row[0] for row in cur.fetchall()]
-
         return render_template('edit_record.html', table_name=table_name, record_id=record_id, columns=columns, row=row)
     finally:
         if conn is not None:
@@ -138,6 +107,8 @@ def delete_record(table_name, record_id):
         confirm_delete = request.form.get('confirm_delete')
         if confirm_delete == 'yes':
             conn = get_db_connection()
+            if conn is None:
+                return "Database connection failed", 500
             try:
                 cur = conn.cursor()
                 query = f"DELETE FROM {table_name} WHERE id = %s"
@@ -145,14 +116,12 @@ def delete_record(table_name, record_id):
                 conn.commit()
                 return redirect(url_for('table_data', table_name=table_name))
             except psycopg2.Error as e:
-                print(f"Ошибка при удалении записи: {e}")
-                return render_template('error.html', message=f"Ошибка при удалении записи из таблицы '{table_name}': {e}")
+                return render_template('error.html', message=f"Ошибка при удалении записи: {e}")
             finally:
                 if cur is not None:
                     cur.close()
                 if conn is not None:
                     conn.close()
-
     conn = get_db_connection()
     try:
         cur = conn.cursor()
@@ -166,6 +135,8 @@ def delete_record(table_name, record_id):
 @app.route('/generate_schedule', methods=['GET'])
 def generate_schedule():
     conn = get_db_connection()
+    if conn is None:
+        return "Database connection failed", 500
     try:
         cur = conn.cursor()
         query = """
@@ -196,59 +167,70 @@ def generate_schedule():
 def execute_query():
     if request.method == 'POST':
         query = request.form['query']
-        
         conn = get_db_connection()
+        if conn is None:
+            return "Database connection failed", 500
         try:
             cur = conn.cursor()
             cur.execute(query)
-            
-            # Fetch all results (adjust this based on your needs)
             result = cur.fetchall()
             column_names = [desc[0] for desc in cur.description]
-            
             return render_template('execute_query.html', query=query, results=result, columns=column_names)
         except psycopg2.Error as e:
-            print(f"Ошибка при выполнении запроса: {e}")
             return render_template('error.html', message=f"Ошибка при выполнении запроса: {e}")
         finally:
             if cur is not None:
                 cur.close()
             if conn is not None:
                 conn.close()
-
     return render_template('execute_query.html')
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     results = []
     columns = []
-    
     if request.method == 'POST':
-        full_name = request.form.get('full_name')
-        birthday = request.form.get('birthday')
-        address = request.form.get('address')
+        search_type = request.form.get('search_type')
+        if search_type == 'student':
+            full_name = request.form.get('full_name')
+            birthday = request.form.get('birthday')
+            address = request.form.get('address')
+            sql_query = "SELECT * FROM student WHERE TRUE"
+            params = []
+            if full_name:
+                sql_query += " AND full_name ILIKE %s"
+                params.append(f"%{full_name}%")
+            if birthday:
+                sql_query += " AND birthday = %s"
+                params.append(birthday)
+            if address:
+                sql_query += " AND address ILIKE %s"
+                params.append(f"%{address}%")
+        elif search_type == 'teacher':
+            teacher_name = request.form.get('teacher_name')
+            subject = request.form.get('subject')
+            sql_query = "SELECT * FROM teacher WHERE TRUE"
+            params = []
+            if teacher_name:
+                sql_query += " AND full_name ILIKE %s"
+                params.append(f"%{teacher_name}%")
+            if subject:
+                sql_query += " AND subject ILIKE %s"
+                params.append(f"%{subject}%")
 
-        # Создаем базовый SQL-запрос
-        sql_query = "SELECT * FROM student WHERE TRUE"
-        params = []
-
-        # Добавляем условия поиска
-        if full_name:
-            sql_query += " AND full_name ILIKE %s"
-            params.append(f"%{full_name}%")
-        if birthday:
-            sql_query += " AND birthday = %s"
-            params.append(birthday)
-        if address:
-            sql_query += " AND address ILIKE %s"
-            params.append(f"%{address}%")
-
-        with get_db_connection() as conn:
+        conn = get_db_connection()
+        if conn is None:
+            return "Database connection failed", 500
+        try:
             cur = conn.cursor()
             cur.execute(sql_query, params)
             results = cur.fetchall()
             columns = [desc[0] for desc in cur.description]
-
+        finally:
+            if cur is not None:
+                cur.close()
+            if conn is not None:
+                conn.close()
     return render_template('search_record.html', results=results, columns=columns)
 
 # Запуск приложения

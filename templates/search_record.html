@@ -1,9 +1,5 @@
 {% extends 'base.html' %}
 
-{% block tables %}
-    {% set tables = ['class', 'schedule', 'student', 'student_in_class', 'timepair', 'subject', 'teacher'] %}
-{% endblock tables %}
-
 {% block content %}
 <div class="container-fluid">
     <div class="row">
@@ -27,14 +23,32 @@
         <div class="col-md-9 content-container">
             <h1>Поиск данных</h1>
             <form method="POST">
-                <label for="full_name">Имя:</label>
-                <input type="text" id="full_name" name="full_name"><br><br>
+                <label for="search_type">Выберите тип поиска:</label>
+                <select id="search_type" name="search_type" onchange="toggleSearchFields()">
+                    <option value="student">Студент</option>
+                    <option value="teacher">Преподаватель</option>
+                </select>
 
-                <label for="birthday">Дата рождения:</label>
-                <input type="date" id="birthday" name="birthday"><br><br>
+                <div id="student_fields">
+                    <h3>Поиск студента</h3>
+                    <label for="full_name">Имя:</label>
+                    <input type="text" id="full_name" name="full_name" value="{{ request.form.full_name }}"><br><br>
 
-                <label for="address">Адрес:</label>
-                <input type="text" id="address" name="address"><br><br>
+                    <label for="birthday">Дата рождения:</label>
+                    <input type="date" id="birthday" name="birthday" value="{{ request.form.birthday }}"><br><br>
+
+                    <label for="address">Адрес:</label>
+                    <input type="text" id="address" name="address" value="{{ request.form.address }}"><br><br>
+                </div>
+
+                <div id="teacher_fields" style="display: none;">
+                    <h3>Поиск преподавателя</h3>
+                    <label for="teacher_name">Имя преподавателя:</label>
+                    <input type="text" id="teacher_name" name="teacher_name" value="{{ request.form.teacher_name }}"><br><br>
+
+                    <label for="subject">Предмет:</label>
+                    <input type="text" id="subject" name="subject" value="{{ request.form.subject }}"><br><br>
+                </div>
 
                 <button type="submit">Поиск</button>
             </form>
@@ -65,4 +79,20 @@
         </div>
     </div>
 </div>
+
+<script>
+    function toggleSearchFields() {
+        const searchType = document.getElementById('search_type').value;
+        const studentFields = document.getElementById('student_fields');
+        const teacherFields = document.getElementById('teacher_fields');
+
+        if (searchType === 'student') {
+            studentFields.style.display = 'block';
+            teacherFields.style.display = 'none';
+        } else {
+            studentFields.style.display = 'none';
+            teacherFields.style.display = 'block';
+        }
+    }
+</script>
 {% endblock %}
