@@ -22,8 +22,33 @@
             </div>
         </div>
         <div class="col-md-9 content-container">
-                <h2>Добро пожаловать, администратор!</h2>
-                <p>Вы можете управлять данными и просматривать полное расписание.</p>
+            <h2>Добро пожаловать, администратор!</h2>
+            <p>Вы можете управлять данными и просматривать полное расписание.</p>
+
+            <h3>Расписание</h3>
+            {% for date, schedule in schedule_by_date.items() %}
+                <h4>{{ date }}</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Группа</th>
+                            <th>Номер пары</th>
+                            <th>Предмет</th>
+                            <th>Преподаватель</th>
+                            <th>Аудитория</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in schedule %}
+                            <tr>
+                                {% for cell in row %}
+                                    <td>{{ cell }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endfor %}
         </div>
     </div>
 </div>
