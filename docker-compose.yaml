@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: university_schedule
+      POSTGRES_USER: mireadmin
+      POSTGRES_PASSWORD: ch1ll1xxc
+    volumes:
+      - ./university_schema.sql:/docker-entrypoint-initdb.d/university_schema.sql
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    command: python app.py
+    depends_on:
+      - db
+    ports:
+      - "5000:5000"

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Available Tables</h1>
+<h1>Доступные таблицы</h1>
 <div class="container-fluid">
     <div class="row">
         <div class="sidebar">
@@ -25,26 +25,6 @@
             {% block insidecontent %}
                 <h2>Добро пожаловать, администратор!</h2>
                 <p>Вы можете управлять данными и просматривать полное расписание.</p>
-                
-                <h3>Полное расписание</h3>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            {% for column in schedule_columns %}
-                                <th>{{ column }}</th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in schedule_rows %}
-                            <tr>
-                                {% for value in row %}
-                                    <td>{{ value }}</td>
-                                {% endfor %}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
             {% endblock %}
         </div>
     </div>

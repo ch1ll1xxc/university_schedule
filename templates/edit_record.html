@@ -1,20 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Редактировать запись</title>
-    <link rel="stylesheet" href="/static/styles.css">
-</head>
-<body>
-    <h1>Редактирование записи в таблице {{ table_name }}</h1>
-    <form method="post" action="{{ url_for('edit_record', table_name=table_name, record_id=record_id) }}">
-        {% for column in columns %}
-            <label for="{{ column }}">{{ column }}:</label>
-            <input type="text" id="{{ column }}" name="{{ column }}" value="{{ row[column] }}">
-        {% endfor %}
-        <button type="submit">Сохранить изменения</button>
-    </form>
-    <a href="{{ url_for('table_data', table_name=table_name) }}">Отменить</a>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Редактирование записи в таблице {{ table_name }}</h1>
+<form method="post" action="{{ url_for('edit_record', table_name=table_name, record_id=record_id) }}">
+    {% for column in columns %}
+        <label for="{{ column }}">{{ column }}:</label>
+        <input type="text" id="{{ column }}" name="{{ column }}" value="{{ row[column] }}">
+    {% endfor %}
+    <button type="submit">Сохранить изменения</button>
+</form>
+<a href="{{ url_for('table_data', table_name=table_name) }}">Отменить</a>
+{% endblock %}
