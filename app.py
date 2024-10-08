@@ -24,17 +24,7 @@ def get_db_connection():
 
 @app.route('/')
 def index():
-    conn = get_db_connection()
-    if conn is None:
-        return "Database connection failed", 500
-    try:
-        cur = conn.cursor()
-        cur.execute('SELECT tablename FROM pg_tables WHERE schemaname = \'public\';')
-        tables = [row[0] for row in cur.fetchall()]
-        return render_template('index.html', tables=tables)
-    finally:
-        if conn is not None:
-            conn.close()
+    return redirect(url_for('register'))  # Перенаправляем на форму регистрации
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -42,64 +32,8 @@ def register():
     groups = []
     try:
         cur = conn.cursor()
-        cur.execute("SELECT id, name FROM class")  # Предполагаем, что у вас есть таблица class
-        groups = cur.fetchall()  # Получаем все группы
-    finally:
-        if cur is not None:
-            cur.close()
-        if conn is not None:
-            conn.close()
-
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        role = request.form['role']
-        class_id = request.form.get('class_id')  # Получаем class_id из выпадающего списка
-
-        # Хешируем пароль
-        hashed_password = generate_password_hash(password)
-
-        conn = get_db_connection()
-        try:
-            cur = conn.cursor()
-            # Добавляем пользователя в базу данных
-            cur.execute("INSERT INTO users (username, password, role, class_id) VALUES (%s, %s, %s, %s)",
-                        (username, hashed_password, role, class_id))
-            conn.commit()
-            flash('Регистрация прошла успешно!', 'success')
-
-            # Перенаправляем на соответствующую страницу в зависимости от роли
-            if role == 'student':
-                return redirect(url_for('group_schedule', class_id=class_id))  # Перенаправление на расписание группы
-            elif role == 'teacher':
-                return redirect(url_for('teacher_schedule', teacher_id=username))  # Перенаправление на расписание преподавателя
-            elif role == 'admin':
-                return redirect(url_for('admin_dashboard'))  # Перенаправление на админскую панель
-        except psycopg2.Error as e:
-            print(f"Ошибка при регистрации: {e}")
-            flash('Ошибка при регистрации. Попробуйте еще раз.', 'danger')
-        finally:
-            if cur is not None:
-                cur.close()
-            if conn is not None:
-                conn.close()
-
-    return render_template('register.html', groups=groups)  # Передаем группы в шаблон
-
-def register_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'username' not in session:  # Проверяем, зарегистрирован ли пользователь
-            return redirect(url_for('register'))  # Перенаправляем на форму регистрации
-        return f(*args, **kwargs)
-    return decorated_function
-
-@app.route('/group_schedule/<int:class_id>', methods=['GET'])
-@register_required
-def group_schedule(class_id):
-    conn = get_db_connection()
-    try:
-        cur = conn.cursor()
+        
+        # Получаем полное расписание
         query = """
         SELECT 
             date, 
@@ -154,10 +88,8 @@ def teacher_schedule(teacher_id):
         if conn is not None:
             conn.close()
 
-@app.route('/table/<string:table_name>', methods=['GET'])
-@register_required
+@app.route('/table/<string:table_name>')
 def table_data(table_name):
-    print(table_name)
     conn = get_db_connection()
     if conn is None:
         return "Database connection failed", 500
@@ -173,7 +105,6 @@ def table_data(table_name):
             conn.close()
 
 @app.route('/add_record/<string:table_name>', methods=['GET', 'POST'])
-@register_required
 def add_record(table_name):
     if request.method == 'POST':
         conn = get_db_connection()
@@ -204,7 +135,6 @@ def add_record(table_name):
             conn.close()
 
 @app.route('/edit_record/<string:table_name>/<int:record_id>', methods=['GET', 'POST'])
-@register_required
 def edit_record(table_name, record_id):
     conn = get_db_connection()
     if conn is None:
@@ -228,7 +158,6 @@ def edit_record(table_name, record_id):
             conn.close()
 
 @app.route('/delete_record/<string:table_name>/<int:record_id>', methods=['GET', 'POST'])
-@register_required
 def delete_record(table_name, record_id):
     if request.method == 'POST':
         confirm_delete = request.form.get('confirm_delete')
@@ -259,10 +188,7 @@ def delete_record(table_name, record_id):
         if conn is not None:
             conn.close()
 
-
-
 @app.route('/generate_schedule', methods=['GET'])
-@register_required  
 def generate_schedule():
     conn = get_db_connection()
     if conn is None:
@@ -294,7 +220,6 @@ def generate_schedule():
             conn.close()
 
 @app.route('/execute_query', methods=['GET', 'POST'])
-@register_required
 def execute_query():
     if request.method == 'POST':
         query = request.form['query']
@@ -317,7 +242,6 @@ def execute_query():
     return render_template('execute_query.html')
 
 @app.route('/search', methods=['GET', 'POST'])
-@register_required
 def search():
     results = []
     columns = []
@@ -364,11 +288,6 @@ def search():
             if conn is not None:
                 conn.close()
     return render_template('search_record.html', results=results, columns=columns)
-
-@app.route('/admin_dashboard', methods=['GET'])
-@register_required
-def admin_dashboard():
-    return render_template('index.html')
 
 # Запуск приложения
 if __name__ == '__main__':
