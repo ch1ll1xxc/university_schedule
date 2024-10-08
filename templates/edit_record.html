@@ -1,13 +1,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Редактирование записи в таблице {{ table_name }}</h1>
+<h1>Редактирование записи в таблице: {{ table_name }}</h1>
 <form method="post" action="{{ url_for('edit_record', table_name=table_name, record_id=record_id) }}">
     {% for column in columns %}
-        <label for="{{ column }}">{{ column }}:</label>
-        <input type="text" id="{{ column }}" name="{{ column }}" value="{{ row[column] }}">
+        <div class="form-group">
+            <label for="{{ column }}">{{ column }}:</label>
+            <input type="text" class="form-control" id="{{ column }}" name="{{ column }}" value="{{ row[column] }}" required>
+        </div>
     {% endfor %}
-    <button type="submit">Сохранить изменения</button>
+    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
 </form>
-<a href="{{ url_for('table_data', table_name=table_name) }}">Отменить</a>
+<a href="{{ url_for('table_data', table_name=table_name) }}" class="btn btn-secondary mt-2">Отменить</a>
 {% endblock %}

@@ -101,36 +101,24 @@ def edit_record(table_name, record_id):
         if conn is not None:
             conn.close()
 
-@app.route('/delete_record/<string:table_name>/<int:record_id>', methods=['GET', 'POST'])
+@app.route('/delete_record/<string:table_name>/<int:record_id>', methods=['GET','POST'])
 def delete_record(table_name, record_id):
-    if request.method == 'POST':
-        confirm_delete = request.form.get('confirm_delete')
-        if confirm_delete == 'yes':
-            conn = get_db_connection()
-            if conn is None:
-                return "Database connection failed", 500
-            try:
-                cur = conn.cursor()
-                query = f"DELETE FROM {table_name} WHERE id = %s"
-                cur.execute(query, (record_id,))
-                conn.commit()
-                return redirect(url_for('table_data', table_name=table_name))
-            except psycopg2.Error as e:
-                return render_template('error.html', message=f"Ошибка при удалении записи: {e}")
-            finally:
-                if cur is not None:
-                    cur.close()
-                if conn is not None:
-                    conn.close()
     conn = get_db_connection()
+    if conn is None:
+        return "Database connection failed", 500
     try:
         cur = conn.cursor()
-        cur.execute(f'SELECT * FROM {table_name} WHERE id = %s', (record_id,))
-        row = cur.fetchone()
-        return render_template('delete_record.html', table_name=table_name, record_id=record_id, row=row)
+        # Выполните SQL-запрос для удаления записи
+        cur.execute(f"DELETE FROM {table_name} WHERE id = %s", (record_id,))
+        conn.commit()
     finally:
+        if cur is not None:
+            cur.close()
         if conn is not None:
             conn.close()
+    
+    # Перенаправление на страницу таблицы после удаления
+    return redirect(url_for('table_data', table_name=table_name))
 
 @app.route('/generate_schedule', methods=['GET'])
 def generate_schedule():

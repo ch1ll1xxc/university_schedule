@@ -1,15 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Удалить запись</title>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
     <h1>Подтверждение удаления</h1>
-    <p>Вы уверены, что хотите удалить эту запись?</p>
-    <form action="/delete_record/{{ table_name }}/{{ record_id }}" method="POST">
-        <button type="submit" name="confirm_delete" value="yes">Да</button>
-        <a href="{{ url_for('table_data', table_name=table_name) }}">Нет</a>
+    <p>Вы уверены, что хотите удалить запись с ID {{ record_id }} из таблицы "{{ table_name }}"?</p>
+    <form method="POST">
+        <button type="submit" class="btn btn-danger">Да, удалить</button>
+        <a href="{{ url_for('table_data', table_name=table_name) }}" class="btn btn-secondary">Нет, отменить</a>
     </form>
-</body>
-</html>
+</div>
+{% endblock %}

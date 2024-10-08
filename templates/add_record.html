@@ -11,7 +11,7 @@
     {% for column in columns %}
         <div class="form-group">
             <label for="{{ column }}">{{ column }}</label>
-            <input type="text" class="form-control" id="{{ column }}" name="{{ column }}">
+            <input type="text" class="form-control" id="{{ column }}" name="{{ column }}" required>
         </div>
     {% endfor %}
     <button type="submit" class="btn btn-primary">Добавить</button>
