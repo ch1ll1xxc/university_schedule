@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block insidecontent %}
+{% block content %}
 <h1>Выполнение SQL-запроса</h1>
 <form method="post" action="/execute_query">
     <textarea name="query" rows="10" cols="50" required placeholder="Введите ваш SQL-запрос здесь..."></textarea><br>
@@ -33,7 +33,7 @@
         {% endif %}
     </div>
 </div>
-{% endblock insidecontent %}
+{% endblock content %}
 
 {% block sidecontent %}
 <div class="container-fluid">

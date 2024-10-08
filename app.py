@@ -1,11 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for
 import psycopg2
-from werkzeug.security import generate_password_hash
-from functools import wraps
 
 app = Flask(__name__)
-
-app.secret_key = '13f0eeb2e881b25e67ee55082b77e3b0b776ac9bf2bf77d5'  # Замените на ваш секретный ключ
 
 # Функция для подключения к базе данных
 def get_db_connection():
@@ -24,67 +20,15 @@ def get_db_connection():
 
 @app.route('/')
 def index():
-    return redirect(url_for('register'))  # Перенаправляем на форму регистрации
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
     conn = get_db_connection()
-    groups = []
+    if conn is None:
+        return "Database connection failed", 500
     try:
         cur = conn.cursor()
-        
-        # Получаем полное расписание
-        query = """
-        SELECT 
-            date, 
-            number_pair, 
-            subject.name AS subject_name, 
-            teacher.full_name AS teacher_name, 
-            classroom
-        FROM schedule
-        JOIN class ON schedule.class_id = class.id
-        JOIN subject ON schedule.subject_id = subject.id
-        JOIN teacher ON schedule.teacher_id = teacher.id
-        WHERE class.id = %s
-        ORDER BY date, number_pair;
-        """
-        cur.execute(query, (class_id,))
-        rows = cur.fetchall()
-        columns = [desc[0] for desc in cur.description]
-        return render_template('group_schedule.html', rows=rows, columns=columns)
+        cur.execute('SELECT tablename FROM pg_tables WHERE schemaname = \'public\';')
+        tables = [row[0] for row in cur.fetchall()]
+        return render_template('index.html', tables=tables)
     finally:
-        if cur is not None:
-            cur.close()
-        if conn is not None:
-            conn.close()
-
-@app.route('/teacher_schedule/<string:teacher_id>', methods=['GET'])
-
-def teacher_schedule(teacher_id):
-    conn = get_db_connection()
-    try:
-        cur = conn.cursor()
-        query = """
-        SELECT 
-            date, 
-            number_pair, 
-            subject.name AS subject_name, 
-            class.name AS group_name, 
-            classroom
-        FROM schedule
-        JOIN class ON schedule.class_id = class.id
-        JOIN subject ON schedule.subject_id = subject.id
-        JOIN teacher ON schedule.teacher_id = teacher.id
-        WHERE teacher.username = %s
-        ORDER BY date, number_pair;
-        """
-        cur.execute(query, (teacher_id,))
-        rows = cur.fetchall()
-        columns = [desc[0] for desc in cur.description]
-        return render_template('teacher_schedule.html', rows=rows, columns=columns)
-    finally:
-        if cur is not None:
-            cur.close()
         if conn is not None:
             conn.close()
 

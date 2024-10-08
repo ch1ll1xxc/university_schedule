@@ -1,10 +1,6 @@
 {% extends 'base.html' %}
 
-{% block tables %}
-    {% set tables = ['class', 'schedule', 'student', 'student_in_class', 'timepair', 'subject', 'teacher'] %}
-{% endblock tables %}
-
-{% block insidecontent %}
+{% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="sidebar">
@@ -83,4 +79,20 @@
         </div>
     </div>
 </div>
+
+<script>
+    function toggleSearchFields() {
+        const searchType = document.getElementById('search_type').value;
+        const studentFields = document.getElementById('student_fields');
+        const teacherFields = document.getElementById('teacher_fields');
+
+        if (searchType === 'student') {
+            studentFields.style.display = 'block';
+            teacherFields.style.display = 'none';
+        } else {
+            studentFields.style.display = 'none';
+            teacherFields.style.display = 'block';
+        }
+    }
+</script>
 {% endblock %}

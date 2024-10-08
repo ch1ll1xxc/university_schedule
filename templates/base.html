@@ -30,7 +30,6 @@
         <a class="navbar-brand" href="/">University Schedule</a>
     </nav>
     <div class="container-fluid">
-        {% block sidecontent %}
         <div class="row">
             <div class="sidebar">
                 <ul class="list-group">
@@ -50,10 +49,9 @@
                 </div>
             </div>
         </div>
-        {% endblock sidecontent%}
     </div>
     <div class="col-md-9 content-container">
-        {% block insidecontent %}{% endblock insidecontent %}
+        {% block content %}{% endblock content %}
     </div>
 
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>

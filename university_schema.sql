@@ -1,12 +1,3 @@
-CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(10) NOT NULL DEFAULT 'teacher'
-    class_id INT,
-    FOREIGN KEY (class_id) REFERENCES class(id) ON DELETE SET NULL
-);
-
 CREATE TABLE IF NOT EXISTS timepair (
   id SERIAL PRIMARY KEY,
   start_pair TIME NOT NULL,
@@ -49,6 +40,15 @@ CREATE TABLE IF NOT EXISTS schedule (
   teacher_id INTEGER REFERENCES teacher(id),
   subject_id INTEGER REFERENCES subject(id),
   classroom INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(10) NOT NULL DEFAULT 'teacher',
+    class_id INT,
+    FOREIGN KEY (class_id) REFERENCES class(id) ON DELETE SET NULL
 );
 
 -- Вставка данных в таблицу Timepair
