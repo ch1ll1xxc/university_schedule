@@ -11,35 +11,45 @@
 
 <p>Ваша группа: {{ group_name }}</p>
 
-<h3>Ваше расписание:</h3>
-{% if schedule %}
-<table class="table">
-    <thead>
-        <tr>
-            <th>Дата</th>
-            <th>Начало пары</th>
-            <th>Конец пары</th>
-            <th>Предмет</th>
-            <th>Преподаватель</th>
-            <th>Аудитория</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for _, date, start_pair, end_pair, subject, teacher, classroom in schedule %}
-        <tr>
-            <td>{{ date }}</td>
-            <td>{{ start_pair }}</td>
-            <td>{{ end_pair }}</td>
-            <td>{{ subject }}</td>
-            <td>{{ teacher }}</td>
-            <td>{{ classroom }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>У вас пока нет расписания.</p>
-{% endif %}
+<h3>Ваше расписание на неделю ({{ start_date }} - {{ end_date }}):</h3>
+{% for date, schedule in schedule_by_date.items() %}
+    {% set day_names = {
+        'Monday': 'Понедельник',
+        'Tuesday': 'Вторник',
+        'Wednesday': 'Среда',
+        'Thursday': 'Четверг',
+        'Friday': 'Пятница',
+        'Saturday': 'Суббота',
+        'Sunday': 'Воскресенье'
+    } %}
+    <h4>{{ date.strftime('%d.%m.%Y') }} ({{ day_names[date.strftime('%A')] }})</h4>
+    {% if schedule %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Начало пары</th>
+                    <th>Конец пары</th>
+                    <th>Предмет</th>
+                    <th>Преподаватель</th>
+                    <th>Аудитория</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in schedule %}
+                    <tr>
+                        <td>{{ row.start_pair }}</td>
+                        <td>{{ row.end_pair }}</td>
+                        <td>{{ row.subject_name }}</td>
+                        <td>{{ row.teacher_name }}</td>
+                        <td>{{ row.classroom }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>На этот день занятий нет.</p>
+    {% endif %}
+{% endfor %}
 
 <a href="{{ url_for('logout') }}" class="btn btn-danger">Выйти</a>
 

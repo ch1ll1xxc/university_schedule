@@ -8,29 +8,43 @@
 </div>
 {% endif %}
 
-<h3>Ваше расписание:</h3>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Дата</th>
-            <th>Номер пары</th>
-            <th>Группа</th>
-            <th>Предмет</th>
-            <th>Аудитория</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for group, date, number_pair, subject, classroom in schedule %}
-        <tr>
-            <td>{{ date }}</td>
-            <td>{{ number_pair }}</td>
-            <td>{{ group }}</td>
-            <td>{{ subject }}</td>
-            <td>{{ classroom }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<h3>Ваше расписание на неделю ({{ start_date }} - {{ end_date }}):</h3>
+{% for date, schedule in schedule_by_date.items() %}
+    {% set day_names = {
+        'Monday': 'Понедельник',
+        'Tuesday': 'Вторник',
+        'Wednesday': 'Среда',
+        'Thursday': 'Четверг',
+        'Friday': 'Пятница',
+        'Saturday': 'Суббота',
+        'Sunday': 'Воскресенье'
+    } %}
+    <h4>{{ date.strftime('%d.%m.%Y') }} ({{ day_names[date.strftime('%A')] }})</h4>
+    {% if schedule %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Группа</th>
+                    <th>Номер пары</th>
+                    <th>Предмет</th>
+                    <th>Аудитория</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in schedule %}
+                    <tr>
+                        <td>{{ row.class_name }}</td>
+                        <td>{{ row.number_pair }}</td>
+                        <td>{{ row.subject_name }}</td>
+                        <td>{{ row.classroom }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>На этот день занятий нет.</p>
+    {% endif %}
+{% endfor %}
 
 <a href="{{ url_for('logout') }}" class="btn btn-danger">Выйти</a>
 

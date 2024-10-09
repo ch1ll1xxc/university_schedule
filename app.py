@@ -195,21 +195,34 @@ def student_dashboard():
         return "Database connection failed", 500
     
     try:
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        start_date = date.today()
+        end_date = start_date + timedelta(days=6)
+        
         cur.execute("""
-            SELECT c.name, s.date, t.start_pair, t.end_pair, sub.name, teach.full_name, s.classroom
+            SELECT s.date, c.name as class_name, t.start_pair, t.end_pair, sub.name as subject_name, 
+                   tc.full_name as teacher_name, s.classroom
             FROM schedule s
             JOIN class c ON s.class_id = c.id
             JOIN timepair t ON s.number_pair = t.id
             JOIN subject sub ON s.subject_id = sub.id
-            JOIN teacher teach ON s.teacher_id = teach.id
+            JOIN teacher tc ON s.teacher_id = tc.id
             JOIN student_in_class sic ON sic.class_id = c.id
             JOIN student st ON sic.student_id = st.id
             JOIN users u ON u.full_name = st.full_name
-            WHERE u.id = %s
+            WHERE u.id = %s AND s.date BETWEEN %s AND %s
             ORDER BY s.date, t.start_pair
-        """, (session['user_id'],))
-        schedule = cur.fetchall()
+        """, (session['user_id'], start_date, end_date))
+        
+        schedule_data = cur.fetchall()
+        
+        schedule_by_date = OrderedDict()
+        for day in range(7):
+            current_date = start_date + timedelta(days=day)
+            schedule_by_date[current_date] = []
+        
+        for row in schedule_data:
+            schedule_by_date[row['date']].append(row)
         
         cur.execute("""
             SELECT c.name 
@@ -220,9 +233,13 @@ def student_dashboard():
             WHERE u.id = %s
         """, (session['user_id'],))
         result = cur.fetchone()
-        group_name = result[0] if result else "Группа не назначена"
+        group_name = result['name'] if result else "Группа не назначена"
         
-        return render_template('student_dashboard.html', schedule=schedule, group_name=group_name)
+        return render_template('student_dashboard.html', 
+                               schedule_by_date=schedule_by_date, 
+                               start_date=start_date.strftime('%d.%m.%Y'), 
+                               end_date=end_date.strftime('%d.%m.%Y'),
+                               group_name=group_name)
     finally:
         if cur is not None:
             cur.close()
@@ -586,18 +603,35 @@ def teacher_dashboard():
         return "Database connection failed", 500
     
     try:
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        start_date = date.today()
+        end_date = start_date + timedelta(days=6)
+        
         cur.execute("""
-            SELECT c.name, s.date, s.number_pair, sub.name, s.classroom
+            SELECT s.date, c.name as class_name, t.id as number_pair, sub.name as subject_name, s.classroom
             FROM schedule s
             JOIN class c ON s.class_id = c.id
+            JOIN timepair t ON s.number_pair = t.id
             JOIN subject sub ON s.subject_id = sub.id
-            JOIN teacher t ON s.teacher_id = t.id
-            WHERE t.full_name = %s
-            ORDER BY s.date, s.number_pair
-        """, (session['full_name'],))
-        schedule = cur.fetchall()
-        return render_template('teacher_dashboard.html', schedule=schedule)
+            JOIN teacher tc ON s.teacher_id = tc.id
+            WHERE tc.full_name = %s AND s.date BETWEEN %s AND %s
+            ORDER BY s.date, t.start_pair
+        """, (session['full_name'], start_date, end_date))
+        
+        schedule_data = cur.fetchall()
+        
+        schedule_by_date = OrderedDict()
+        for day in range(7):
+            current_date = start_date + timedelta(days=day)
+            schedule_by_date[current_date] = []
+        
+        for row in schedule_data:
+            schedule_by_date[row['date']].append(row)
+        
+        return render_template('teacher_dashboard.html', 
+                               schedule_by_date=schedule_by_date, 
+                               start_date=start_date.strftime('%d.%m.%Y'), 
+                               end_date=end_date.strftime('%d.%m.%Y'))
     finally:
         if cur is not None:
             cur.close()
