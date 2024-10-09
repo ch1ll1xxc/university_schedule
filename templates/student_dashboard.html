@@ -1,0 +1,56 @@
+{% extends 'base_no_sidebar.html' %}
+
+{% block content %}
+<h2>Панель студента</h2>
+
+{% if session.pop('show_welcome', False) %}
+<div id="welcome-message" class="alert alert-success">
+    Добро пожаловать, {{ session['full_name'] }}! Вход выполнен успешно.
+</div>
+{% endif %}
+
+<p>Ваша группа: {{ group_name }}</p>
+
+<h3>Ваше расписание:</h3>
+{% if schedule %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Начало пары</th>
+            <th>Конец пары</th>
+            <th>Предмет</th>
+            <th>Преподаватель</th>
+            <th>Аудитория</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for _, date, start_pair, end_pair, subject, teacher, classroom in schedule %}
+        <tr>
+            <td>{{ date }}</td>
+            <td>{{ start_pair }}</td>
+            <td>{{ end_pair }}</td>
+            <td>{{ subject }}</td>
+            <td>{{ teacher }}</td>
+            <td>{{ classroom }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>У вас пока нет расписания.</p>
+{% endif %}
+
+<a href="{{ url_for('logout') }}" class="btn btn-danger">Выйти</a>
+
+<script>
+    // Скрыть приветственное сообщение через 5 секунд
+    setTimeout(function() {
+        var welcomeMessage = document.getElementById('welcome-message');
+        if (welcomeMessage) {
+            welcomeMessage.style.display = 'none';
+        }
+    }, 5000);
+</script>
+
+{% endblock %}

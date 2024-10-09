@@ -1,0 +1,46 @@
+{% extends 'base_no_sidebar.html' %}
+
+{% block content %}
+<h2>Панель преподавателя</h2>
+{% if session.pop('show_welcome', False) %}
+<div id="welcome-message" class="alert alert-success">
+    Добро пожаловать, {{ session['full_name'] }}! Вход выполнен успешно.
+</div>
+{% endif %}
+
+<h3>Ваше расписание:</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Номер пары</th>
+            <th>Группа</th>
+            <th>Предмет</th>
+            <th>Аудитория</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for group, date, number_pair, subject, classroom in schedule %}
+        <tr>
+            <td>{{ date }}</td>
+            <td>{{ number_pair }}</td>
+            <td>{{ group }}</td>
+            <td>{{ subject }}</td>
+            <td>{{ classroom }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('logout') }}" class="btn btn-danger">Выйти</a>
+
+<script>
+    // Скрыть приветственное сообщение через 5 секунд
+    setTimeout(function() {
+        var welcomeMessage = document.getElementById('welcome-message');
+        if (welcomeMessage) {
+            welcomeMessage.style.display = 'none';
+        }
+    }, 5000);
+</script>
+{% endblock %}

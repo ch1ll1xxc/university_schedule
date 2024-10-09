@@ -42,14 +42,22 @@ CREATE TABLE IF NOT EXISTS schedule (
   classroom INTEGER
 );
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(10) NOT NULL DEFAULT 'teacher',
-    class_id INT,
-    FOREIGN KEY (class_id) REFERENCES class(id) ON DELETE SET NULL
+    full_name VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    is_student BOOLEAN DEFAULT FALSE,
+    is_teacher BOOLEAN DEFAULT FALSE
 );
+
+CREATE TABLE admins (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+-- Добавьте начального администратора
+INSERT INTO admins (username, password) VALUES ('admin', 'admin_password');
 
 -- Вставка данных в таблицу Timepair
 INSERT INTO timepair (start_pair, end_pair) VALUES
@@ -119,3 +127,61 @@ INSERT INTO schedule (date, class_id, number_pair, teacher_id, subject_id, class
 ('2023-09-12', 2, 3, 6, 3, 1),
 ('2023-09-13', 3, 1, 1, 2, 2),
 ('2023-09-13', 3, 2, 2, 3, 3);
+
+CREATE OR REPLACE FUNCTION count_students_in_class(class_id INTEGER)
+RETURNS INTEGER AS $$
+DECLARE
+    student_count INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO student_count
+    FROM student_in_class
+    WHERE class_id = $1;
+    RETURN student_count;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TABLE class_stats (
+    class_id INTEGER PRIMARY KEY REFERENCES class(id),
+    student_count INTEGER DEFAULT 0
+);
+
+CREATE OR REPLACE FUNCTION update_class_stats()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        INSERT INTO class_stats (class_id, student_count)
+        VALUES (NEW.class_id, 1)
+        ON CONFLICT (class_id) DO UPDATE
+        SET student_count = class_stats.student_count + 1;
+    ELSIF TG_OP = 'DELETE' THEN
+        UPDATE class_stats
+        SET student_count = student_count - 1
+        WHERE class_id = OLD.class_id;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER student_in_class_trigger
+AFTER INSERT OR DELETE ON student_in_class
+FOR EACH ROW EXECUTE FUNCTION update_class_stats();
+
+CREATE OR REPLACE FUNCTION get_teacher_schedule(teacher_id INTEGER, schedule_date DATE)
+RETURNS TABLE (
+    class_name TEXT,
+    subject_name TEXT,
+    start_time TIME,
+    end_time TIME,
+    classroom INTEGER
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT c.name, s.name, t.start_pair, t.end_pair, sch.classroom
+    FROM schedule sch
+    JOIN class c ON sch.class_id = c.id
+    JOIN subject s ON sch.subject_id = s.id
+    JOIN timepair t ON sch.number_pair = t.id
+    WHERE sch.teacher_id = $1 AND sch.date = $2
+    ORDER BY t.start_pair;
+END;
+$$ LANGUAGE plpgsql;

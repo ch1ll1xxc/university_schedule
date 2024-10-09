@@ -1,52 +1,41 @@
-{% extends 'base.html' %}
-
-{% block sidecontent %}
-{% endblock sidecontent %}
-
+{% extends 'base_no_sidebar.html' %}
 
 {% block content %}
-<div class="container-fluid">  <!-- Используем container-fluid для растяжения на всю ширину -->
-</div>
-<div class="row justify-content-center">
-    <div class="col-md-8">  <!-- Увеличиваем ширину колонки -->
-        <h1 class="mt-4">Регистрация</h1>
-        <form method="POST">
-            <div class="form-group">
-                <label for="username">Имя пользователя:</label>
-                <input type="text" id="username" name="username" required class="form-control" style="width: 100%;">
-            </div>
-            <div class="form-group">
-                <label for="password">Пароль:</label>
-                <input type="password" id="password" name="password" required class="form-control" style="width: 100%;">
-            </div>
-            <div class="form-group">
-                <label for="role">Роль:</label>
-                <select id="role" name="role" required class="form-control" style="width: 100%;">
-                    <option value="teacher">Преподаватель</option>
-                    <option value="student">Студент</option>
-                    <option value="admin">Админ</option>
-                </select>
-            </div>
-            <div class="form-group" id="class_id_container" style="display: none;">
-                <label for="class_id">Группа:</label>
-                <select id="class_id" name="class_id" class="form-control" style="width: 100%;">
-                    {% for group in groups %}
-                        <option value="{{ group[0] }}">{{ group[1] }}</option>  <!-- Изменено на group[0] и group[1] -->
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Зарегистрироваться</button>
-        </form>
+<h2>Регистрация</h2>
+<form method="POST">
+    <div class="form-group">
+        <label for="full_name">Полное имя:</label>
+        <input type="text" class="form-control" id="full_name" name="full_name" required>
     </div>
-</div>
+    <div class="form-group">
+        <label for="password">Пароль:</label>
+        <input type="password" class="form-control" id="password" name="password" required>
+    </div>
+    <div class="form-group">
+        <label for="user_type">Тип пользователя:</label>
+        <select class="form-control" id="user_type" name="user_type" required>
+            <option value="student">Студент</option>
+            <option value="teacher">Преподаватель</option>
+        </select>
+    </div>
+    <div class="form-group" id="group_select" style="display: none;">
+        <label for="group_id">Группа:</label>
+        <select class="form-control" id="group_id" name="group_id">
+            {% for group_id, group_name in groups %}
+                <option value="{{ group_id }}">{{ group_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+</form>
 
 <script>
-    document.getElementById('role').addEventListener('change', function() {
-        var classIdContainer = document.getElementById('class_id_container');
+    document.getElementById('user_type').addEventListener('change', function() {
+        var groupSelect = document.getElementById('group_select');
         if (this.value === 'student') {
-            classIdContainer.style.display = 'block';
+            groupSelect.style.display = 'block';
         } else {
-            classIdContainer.style.display = 'none';
+            groupSelect.style.display = 'none';
         }
     });
 </script>
