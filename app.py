@@ -7,6 +7,7 @@ from flask import abort
 from datetime import date, timedelta
 from collections import OrderedDict
 import psycopg2.extras
+from math import ceil
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -321,16 +322,34 @@ def table_data(table_name):
 
     try:
         cur = conn.cursor()
-        cur.execute(f"SELECT * FROM {table_name}")
+        
+        # Получаем общее количество записей
+        cur.execute(f"SELECT COUNT(*) FROM {table_name}")
+        total_records = cur.fetchone()[0]
+        
+        # Настройки пагинации
+        per_page = 10
+        total_pages = ceil(total_records / per_page)
+        page = request.args.get('page', 1, type=int)
+        
+        # Получаем записи для текущей страницы
+        offset = (page - 1) * per_page
+        cur.execute(f"SELECT * FROM {table_name} LIMIT {per_page} OFFSET {offset}")
         rows = cur.fetchall()
+        
         columns = [desc[0] for desc in cur.description]
         translated_columns = translate_columns(columns)
+        
         return render_template('table_data.html', 
                                rows=rows, 
-                               columns=columns,  # Передаем оригинальные названия столбцов
-                               translated_columns=translated_columns,  # Передаем переведенные названия столбцов
+                               columns=columns,
+                               translated_columns=translated_columns,
                                table_name=table_name, 
-                               column_translations=column_translations)  # Передаем словарь с переводами
+                               column_translations=column_translations,
+                               page=page,
+                               total_pages=total_pages,
+                               max=max,  # Добавляем функцию max в контекст
+                               min=min)  # Добавляем функцию min в контекст
     except psycopg2.Error as e:
         flash(f'Ошибка при получении данных: {str(e)}', 'danger')
         return redirect(url_for('index'))
