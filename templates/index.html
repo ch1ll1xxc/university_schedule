@@ -1,7 +1,21 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Доступные таблицы</h1>
+<h1>Административная панель</h1>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 <div class="container-fluid">
     <div class="row">
         <div class="sidebar">
@@ -19,35 +33,51 @@
                 <h4>Управление данными</h4>
                 <li class="list-group-item"><a href="{{ url_for('execute_query') }}">Выполнить SQL-запрос</a></li>
                 <li class="list-group-item"><a href="{{ url_for('search') }}">Поиск записи</a></li>
+                <li class="list-group-item"><a href="{{ url_for('test_functions') }}">Тестирование функций (Бета 0.1)</a></li>
             </div>
         </div>
         <div class="col-md-9 content-container">
             <h2>Добро пожаловать, администратор!</h2>
-            <p>Вы можете управлять данными и просматривать полное расписание.</p>
+            <p>Вы можете управлять данными и просматривать расписание на неделю вперед.</p>
 
-            <h3>Расписание</h3>
+            <h3>Расписание на неделю ({{ start_date }} - {{ end_date }})</h3>
             {% for date, schedule in schedule_by_date.items() %}
-                <h4>{{ date }}</h4>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Группа</th>
-                            <th>Номер пары</th>
-                            <th>Предмет</th>
-                            <th>Преподаватель</th>
-                            <th>Аудитория</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in schedule %}
+                {% set day_names = {
+                    'Monday': 'Понедельник',
+                    'Tuesday': 'Вторник',
+                    'Wednesday': 'Среда',
+                    'Thursday': 'Четверг',
+                    'Friday': 'Пятница',
+                    'Saturday': 'Суббота',
+                    'Sunday': 'Воскресенье'
+                } %}
+                <h4>{{ date.strftime('%d.%m.%Y') }} ({{ day_names[date.strftime('%A')] }})</h4>
+                {% if schedule %}
+                    <table class="table table-striped">
+                        <thead>
                             <tr>
-                                {% for cell in row %}
-                                    <td>{{ cell }}</td>
-                                {% endfor %}
+                                <th>Группа</th>
+                                <th>Номер пары</th>
+                                <th>Предмет</th>
+                                <th>Преподаватель</th>
+                                <th>Аудитория</th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for row in schedule %}
+                                <tr>
+                                    <td>{{ row.class_name }}</td>
+                                    <td>{{ row.number_pair }}</td>
+                                    <td>{{ row.subject_name }}</td>
+                                    <td>{{ row.teacher_name }}</td>
+                                    <td>{{ row.classroom }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>На этот день расписания нет.</p>
+                {% endif %}
             {% endfor %}
         </div>
     </div>

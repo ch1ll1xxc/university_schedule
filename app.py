@@ -4,9 +4,34 @@ import psycopg2
 import os
 from functools import wraps
 from flask import abort
+from datetime import date, timedelta
+from collections import OrderedDict
+import psycopg2.extras
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+
+column_translations = {
+    'id': 'ID',
+    'full_name': 'Полное имя',
+    'birthday': 'Дата рождения',
+    'address': 'Адрес',
+    'name': 'Название',
+    'date': 'Дата',
+    'class_id': 'ID класса',
+    'number_pair': 'Номер пары',
+    'teacher_id': 'ID преподавателя',
+    'subject_id': 'ID предмета',
+    'classroom': 'Аудитория',
+    'start_pair': 'Начало пары',
+    'end_pair': 'Конец пары',
+    'student_id': 'ID студента',
+    'position': 'Должность'
+}
+
+# Добавьте эту функцию в app.py
+def translate_columns(columns):
+    return [column_translations.get(col, col) for col in columns]
 
 def admin_required(f):
     @wraps(f)
@@ -223,41 +248,49 @@ def logout():
 @app.route('/index')
 @admin_required
 def index():
-    if 'user_id' not in session or not session['is_admin']:
-        return redirect(url_for('login'))
-    
-    conn = get_db_connection()
-    if conn is None:
-        return "Database connection failed", 500
+    conn = None
+    cur = None
     try:
-        cur = conn.cursor()
-        query = """
-        SELECT 
-            date, 
-            class.name AS group_name, 
-            number_pair, 
-            subject.name AS subject_name, 
-            teacher.full_name AS teacher_name, 
-            classroom
-        FROM schedule
-        JOIN class ON schedule.class_id = class.id
-        JOIN subject ON schedule.subject_id = subject.id
-        JOIN teacher ON schedule.teacher_id = teacher.id
-        ORDER BY date, number_pair;
-        """
-        cur.execute(query)
-        rows = cur.fetchall()
-        columns = [desc[0] for desc in cur.description]
+        conn = get_db_connection()
+        if conn is None:
+            flash('Ошибка подключения к базе данных', 'danger')
+            return redirect(url_for('login'))
 
-        schedule_by_date = {}
-        for row in rows:
-            date = row[0]
-            if date not in schedule_by_date:
-                schedule_by_date[date] = []
-            schedule_by_date[date].append(row[1:])
-
-        return render_template('index.html', schedule_by_date=schedule_by_date)
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        start_date = date.today()
+        end_date = start_date + timedelta(days=6)
+        
+        cur.execute("""
+            SELECT sc.date, c.name as class_name, t.id as number_pair, s.name as subject_name, 
+                   tc.full_name as teacher_name, sc.classroom
+            FROM schedule sc
+            JOIN class c ON sc.class_id = c.id
+            JOIN timepair t ON sc.number_pair = t.id
+            JOIN subject s ON sc.subject_id = s.id
+            JOIN teacher tc ON sc.teacher_id = tc.id
+            WHERE sc.date BETWEEN %s AND %s
+            ORDER BY sc.date, t.start_pair
+        """, (start_date, end_date))
+        
+        schedule_data = cur.fetchall()
+        
+        schedule_by_date = OrderedDict()
+        for day in range(7):
+            current_date = start_date + timedelta(days=day)
+            schedule_by_date[current_date] = []
+        
+        for row in schedule_data:
+            schedule_by_date[row['date']].append(row)
+        
+        return render_template('index.html', schedule_by_date=schedule_by_date, 
+                               start_date=start_date.strftime('%d.%m.%Y'), 
+                               end_date=end_date.strftime('%d.%m.%Y'))
+    except Exception as e:
+        flash(f'Произошла ошибка: {str(e)}', 'danger')
+        return redirect(url_for('login'))
     finally:
+        if cur is not None:
+            cur.close()
         if conn is not None:
             conn.close()
 
@@ -266,47 +299,75 @@ def index():
 def table_data(table_name):
     conn = get_db_connection()
     if conn is None:
-        return "Database connection failed", 500
+        flash('Ошибка подключения к базе данных', 'danger')
+        return redirect(url_for('index'))
+
     try:
         cur = conn.cursor()
-        cur.execute(f'SELECT column_name FROM information_schema.columns WHERE table_name = %s', (table_name,))
-        columns = [row[0] for row in cur.fetchall()]
-        cur.execute(f'SELECT * FROM {table_name}')
+        cur.execute(f"SELECT * FROM {table_name}")
         rows = cur.fetchall()
-        return render_template('table_data.html', table_name=table_name, columns=columns, rows=rows)
+        columns = [desc[0] for desc in cur.description]
+        translated_columns = translate_columns(columns)
+        return render_template('table_data.html', 
+                               rows=rows, 
+                               columns=columns,  # Передаем оригинальные названия столбцов
+                               translated_columns=translated_columns,  # Передаем переведенные названия столбцов
+                               table_name=table_name, 
+                               column_translations=column_translations)  # Передаем словарь с переводами
+    except psycopg2.Error as e:
+        flash(f'Ошибка при получении данных: {str(e)}', 'danger')
+        return redirect(url_for('index'))
     finally:
-        if conn is not None:
+        if cur:
+            cur.close()
+        if conn:
             conn.close()
 
 @app.route('/add_record/<string:table_name>', methods=['GET', 'POST'])
 @admin_required
 def add_record(table_name):
-    if request.method == 'POST':
-        conn = get_db_connection()
-        if conn is None:
-            return "Database connection failed", 500
-        try:
-            cur = conn.cursor()
-            values = tuple(request.form.values())
-            query = f"INSERT INTO {table_name} VALUES ({', '.join(['%s'] * len(values))})"
-            cur.execute(query, values)
-            conn.commit()
-            return redirect(url_for('table_data', table_name=table_name))
-        except psycopg2.Error as e:
-            return render_template('error.html', message=f"Ошибка при добавлении записи: {e}")
-        finally:
-            if cur is not None:
-                cur.close()
-            if conn is not None:
-                conn.close()
     conn = get_db_connection()
+    if conn is None:
+        flash('Ошибка подключения к базе данных', 'danger')
+        return redirect(url_for('index'))
+
     try:
         cur = conn.cursor()
-        cur.execute(f'SELECT column_name FROM information_schema.columns WHERE table_name = %s', (table_name,))
-        columns = [row[0] for row in cur.fetchall()]
-        return render_template('add_record.html', table_name=table_name, columns=columns)
+        cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}'")
+        columns = [column[0] for column in cur.fetchall() if column[0] != 'id']
+
+        options = {}
+        for column in columns:
+            if column.endswith('_id'):
+                related_table = column[:-3]  # Remove '_id' from the end
+                cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = '{related_table}'")
+                related_columns = [col[0] for col in cur.fetchall() if col[0] != 'id']
+                
+                # Выбираем подходящий столбец для отображения
+                display_column = 'name' if 'name' in related_columns else 'full_name' if 'full_name' in related_columns else related_columns[0]
+                
+                cur.execute(f"SELECT id, {display_column} FROM {related_table}")
+                options[column] = [{'id': row[0], 'name': row[1]} for row in cur.fetchall()]
+
+        if request.method == 'POST':
+            values = [request.form[column] for column in columns]
+            query = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({', '.join(['%s']*len(columns))})"
+            
+            try:
+                cur.execute(query, values)
+                conn.commit()
+                flash(f'Запись успешно добавлена в таблицу {table_name}', 'success')
+                return redirect(url_for('table_data', table_name=table_name))
+            except psycopg2.Error as e:
+                conn.rollback()
+                flash(f'Ошибка при добавлении записи: {str(e)}', 'danger')
+
+        today = date.today().isoformat()
+        return render_template('add_record.html', table_name=table_name, columns=columns, options=options, today=today)
     finally:
-        if conn is not None:
+        if cur:
+            cur.close()
+        if conn:
             conn.close()
 
 @app.route('/edit_record/<string:table_name>/<int:record_id>', methods=['GET', 'POST'])
@@ -333,24 +394,59 @@ def edit_record(table_name, record_id):
         if conn is not None:
             conn.close()
 
-@app.route('/delete_record/<string:table_name>/<int:record_id>', methods=['GET','POST'])
+@app.route('/confirm_delete/<string:table_name>/<int:record_id>', methods=['GET'])
+@admin_required
+def confirm_delete(table_name, record_id):
+    conn = get_db_connection()
+    if conn is None:
+        flash('Ошибка подключения к базе данных', 'danger')
+        return redirect(url_for('index'))
+
+    try:
+        cur = conn.cursor()
+        cur.execute(f"SELECT * FROM {table_name} WHERE id = %s", (record_id,))
+        record = cur.fetchone()
+        if record is None:
+            flash('Запись не найдена', 'danger')
+            return redirect(url_for('table_data', table_name=table_name))
+        
+        column_names = [desc[0] for desc in cur.description]
+        record_dict = dict(zip(column_names, record))
+        
+        return render_template('delete_record.html', table_name=table_name, record=record_dict)
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.route('/delete_record/<string:table_name>/<int:record_id>', methods=['POST'])
 @admin_required
 def delete_record(table_name, record_id):
     conn = get_db_connection()
     if conn is None:
-        return "Database connection failed", 500
+        flash('Ошибка подключения к базе данных', 'danger')
+        return redirect(url_for('index'))
+
     try:
         cur = conn.cursor()
-        # Выполните SQL-запрос для удаления записи
+        
+        # Если удаляем студента, сначала удаляем связанные записи
+        if table_name == 'student':
+            cur.execute("DELETE FROM student_in_class WHERE student_id = %s", (record_id,))
+        
         cur.execute(f"DELETE FROM {table_name} WHERE id = %s", (record_id,))
         conn.commit()
+        flash(f'Запись успешно удалена из таблицы {table_name}', 'success')
+    except psycopg2.Error as e:
+        conn.rollback()
+        flash(f'Ошибка при удалении записи: {str(e)}', 'danger')
     finally:
-        if cur is not None:
+        if cur:
             cur.close()
-        if conn is not None:
+        if conn:
             conn.close()
     
-    # Перенаправление на страницу таблицы после удаления
     return redirect(url_for('table_data', table_name=table_name))
 
 @app.route('/generate_schedule', methods=['GET'])
@@ -398,7 +494,13 @@ def execute_query():
             cur.execute(query)
             result = cur.fetchall()
             column_names = [desc[0] for desc in cur.description]
-            return render_template('execute_query.html', query=query, results=result, columns=column_names)
+            translated_columns = translate_columns(column_names)
+            return render_template('execute_query.html', 
+                                   query=query, 
+                                   results=result, 
+                                   columns=column_names,
+                                   translated_columns=translated_columns,
+                                   column_translations=column_translations)
         except psycopg2.Error as e:
             return render_template('error.html', message=f"Ошибка при выполнении запроса: {e}")
         finally:
@@ -433,14 +535,23 @@ def search():
         elif search_type == 'teacher':
             teacher_name = request.form.get('teacher_name')
             subject = request.form.get('subject')
-            sql_query = "SELECT * FROM teacher WHERE TRUE"
+            position = request.form.get('position')
+            sql_query = """
+            SELECT DISTINCT t.* FROM teacher t
+            LEFT JOIN schedule s ON t.id = s.teacher_id
+            LEFT JOIN subject sub ON s.subject_id = sub.id
+            WHERE TRUE
+            """
             params = []
             if teacher_name:
-                sql_query += " AND full_name ILIKE %s"
+                sql_query += " AND t.full_name ILIKE %s"
                 params.append(f"%{teacher_name}%")
             if subject:
-                sql_query += " AND subject ILIKE %s"
+                sql_query += " AND sub.name ILIKE %s"
                 params.append(f"%{subject}%")
+            if position:
+                sql_query += " AND t.position = %s"
+                params.append(position)
 
         conn = get_db_connection()
         if conn is None:
@@ -455,7 +566,15 @@ def search():
                 cur.close()
             if conn is not None:
                 conn.close()
-    return render_template('search_record.html', results=results, columns=columns)
+   
+    # Переводим названия столбцов
+    translated_columns = [column_translations.get(col, col) for col in columns]
+    
+    return render_template('search_record.html', 
+                           results=results, 
+                           columns=columns,
+                           translated_columns=translated_columns,
+                           column_translations=column_translations)
 
 @app.route('/teacher_dashboard')
 def teacher_dashboard():
@@ -484,6 +603,71 @@ def teacher_dashboard():
             cur.close()
         if conn is not None:
             conn.close()
+
+@app.route('/test_functions')
+@admin_required
+def test_functions():
+    conn = get_db_connection()
+    if conn is None:
+        return "Database connection failed", 500
+    
+    results = {}
+    
+    try:
+        cur = conn.cursor()
+        
+        # Обновление функции count_students_in_class
+        cur.execute("""
+        CREATE OR REPLACE FUNCTION count_students_in_class(input_class_id INTEGER)
+        RETURNS INTEGER AS $$
+        DECLARE
+            student_count INTEGER;
+        BEGIN
+            SELECT COUNT(*) INTO student_count
+            FROM student_in_class
+            WHERE student_in_class.class_id = input_class_id;
+            RETURN student_count;
+        END;
+        $$ LANGUAGE plpgsql;
+        """)
+        conn.commit()
+        
+        # Тест функции count_students_in_class
+        cur.execute("SELECT id, name FROM class")
+        classes = cur.fetchall()
+        class_counts = []
+        for class_id, class_name in classes:
+            cur.execute("SELECT count_students_in_class(%s)", (class_id,))
+            count = cur.fetchone()[0]
+            class_counts.append((class_name, count))
+        results['student_counts'] = class_counts
+        
+        # Тест триггера update_class_stats
+        cur.execute("SELECT c.name, cs.student_count FROM class c JOIN class_stats cs ON c.id = cs.class_id")
+        class_stats = cur.fetchall()
+        results['class_stats'] = class_stats
+        
+        # Тест функции get_teacher_schedule
+        cur.execute("SELECT id, full_name FROM teacher")
+        teachers = cur.fetchall()
+        teacher_schedules = []
+        for teacher_id, teacher_name in teachers:
+            cur.execute("SELECT * FROM get_teacher_schedule(%s, CURRENT_DATE)", (teacher_id,))
+            schedule = cur.fetchall()
+            teacher_schedules.append((teacher_name, schedule))
+        results['teacher_schedules'] = teacher_schedules
+        
+    except psycopg2.Error as e:
+        # Обработка ошибок базы данных
+        print(f"Database error: {e}")
+        results['error'] = str(e)
+    finally:
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
+    
+    return render_template('test_functions.html', results=results)
 
 # Запуск приложения
 if __name__ == '__main__':

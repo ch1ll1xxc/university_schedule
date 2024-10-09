@@ -1,12 +1,20 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container">
-    <h1>Подтверждение удаления</h1>
-    <p>Вы уверены, что хотите удалить запись с ID {{ record_id }} из таблицы "{{ table_name }}"?</p>
-    <form method="POST">
-        <button type="submit" class="btn btn-danger">Да, удалить</button>
-        <a href="{{ url_for('table_data', table_name=table_name) }}" class="btn btn-secondary">Нет, отменить</a>
-    </form>
-</div>
+<h1>Подтверждение удаления</h1>
+<p>Вы уверены, что хотите удалить эту запись из таблицы {{ table_name }}?</p>
+
+<table class="table">
+    {% for key, value in record.items() %}
+    <tr>
+        <th>{{ key }}</th>
+        <td>{{ value }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<form action="{{ url_for('delete_record', table_name=table_name, record_id=record.id) }}" method="post">
+    <button type="submit" class="btn btn-danger">Удалить</button>
+    <a href="{{ url_for('table_data', table_name=table_name) }}" class="btn btn-secondary">Отмена</a>
+</form>
 {% endblock %}

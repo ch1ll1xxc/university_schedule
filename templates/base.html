@@ -23,11 +23,29 @@
             padding-top: 1rem;
             padding-bottom: 1rem;
         }
+        
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+            font-weight: bold;
+        }
+        .alert-dismissible .close {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 0.75rem 1.25rem;
+            color: inherit;
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="/">University Schedule</a>
+        <a class="navbar-brand" href="/">Расписание ИТ</a>
     </nav>
     <div class="container-fluid">
         <div class="row">
@@ -44,8 +62,10 @@
                 </ul>
                 <div class="list-group">
                     <h4>Управление данными</h4>
+                    <li class="list-group-item"><a href="{{ url_for('index') }}">Просмотр расписания</a></li>
                     <li class="list-group-item"><a href="{{ url_for('execute_query') }}">Выполнить SQL-запрос</a></li>
                     <li class="list-group-item"><a href="{{ url_for('search') }}">Поиск записи</a></li>
+                    <li class="list-group-item"><a href="{{ url_for('test_functions') }}">Тестирование функций (Бета 0.1)</a></li>
                 </div>
             </div>
         </div>

@@ -7,11 +7,37 @@
 {% block content %}
 <h1>Добавление записи в таблицу: {{ table_name }}</h1>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 <form method="post">
     {% for column in columns %}
         <div class="form-group">
             <label for="{{ column }}">{{ column }}</label>
-            <input type="text" class="form-control" id="{{ column }}" name="{{ column }}" required>
+            {% if column == 'date' %}
+                <input type="date" class="form-control" id="{{ column }}" name="{{ column }}" required min="{{ today }}">
+            {% elif column == 'birthday' %}
+                <input type="date" class="form-control" id="{{ column }}" name="{{ column }}" required>
+            {% elif column.endswith('_id') %}
+                <select class="form-control" id="{{ column }}" name="{{ column }}" required>
+                    <option value="">Выберите {{ column }}</option>
+                    {% for option in options[column] %}
+                        <option value="{{ option.id }}">{{ option.name }}</option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <input type="text" class="form-control" id="{{ column }}" name="{{ column }}" required>
+            {% endif %}
         </div>
     {% endfor %}
     <button type="submit" class="btn btn-primary">Добавить</button>

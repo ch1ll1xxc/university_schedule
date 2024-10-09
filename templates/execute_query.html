@@ -14,7 +14,7 @@
                 <thead>
                     <tr>
                         {% for column in columns %}
-                            <th>{{ column }}</th>
+                            <th>{{ column_translations.get(column, column) }}</th>
                         {% endfor %}
                     </tr>
                 </thead>

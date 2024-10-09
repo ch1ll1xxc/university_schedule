@@ -48,6 +48,16 @@
 
                     <label for="subject">Предмет:</label>
                     <input type="text" id="subject" name="subject" value="{{ request.form.subject }}"><br><br>
+
+                    <label for="position">Должность:</label>
+                    <select id="position" name="position">
+                        <option value="">Все должности</option>
+                        <option value="к.т.н.">к.т.н.</option>
+                        <option value="доцент">доцент</option>
+                        <option value="к.э.н.">к.э.н.</option>
+                        <option value="ассистент">ассистент</option>
+                        <option value="старший преподаватель">старший преподаватель</option>
+                    </select><br><br>
                 </div>
 
                 <button type="submit">Поиск</button>
@@ -59,7 +69,7 @@
                     <thead>
                         <tr>
                             {% for column in columns %}
-                                <th>{{ column }}</th>
+                                <th>{{ column_translations.get(column, column) }}</th>
                             {% endfor %}
                         </tr>
                     </thead>

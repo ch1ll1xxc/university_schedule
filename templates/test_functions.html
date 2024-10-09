@@ -3,48 +3,47 @@
 {% block content %}
 <h2>Тестирование функций и триггеров. Beta 0.1</h2>
 
-<h3>Количество студентов в группах:</h3>
-<ul>
-{% for class_name, count in results.student_counts %}
-    <li>{{ class_name }}: {{ count }} студентов</li>
-{% endfor %}
-</ul>
+{% if results.error %}
+<div class="alert alert-danger">
+    <strong>Ошибка:</strong> {{ results.error }}
+</div>
+{% else %}
+    <h3>Количество студентов в группах:</h3>
+    <ul>
+    {% for class_name, count in results.student_counts %}
+        <li>{{ class_name }}: {{ count }} студентов</li>
+    {% endfor %}
+    </ul>
 
-<h3>Статистика групп (обновляется триггером):</h3>
-<ul>
-{% for class_name, count in results.class_stats %}
-    <li>{{ class_name }}: {{ count }} студентов</li>
-{% endfor %}
-</ul>
-
-<h3>Расписание преподавателей на сегодня:</h3>
-{% for teacher_name, schedule in results.teacher_schedules %}
-    <h4>{{ teacher_name }}</h4>
-    {% if schedule %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Группа</th>
-                    <th>Предмет</th>
-                    <th>Начало</th>
-                    <th>Конец</th>
-                    <th>Аудитория</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for class_name, subject, start_time, end_time, classroom in schedule %}
-                <tr>
-                    <td>{{ class_name }}</td>
-                    <td>{{ subject }}</td>
-                    <td>{{ start_time }}</td>
-                    <td>{{ end_time }}</td>
-                    <td>{{ classroom }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Нет занятий на сегодня</p>
-    {% endif %}
-{% endfor %}
+    <h3>Расписание преподавателей на сегодня:</h3>
+    {% for teacher_name, schedule in results.teacher_schedules %}
+        <h4>{{ teacher_name }}</h4>
+        {% if schedule %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Группа</th>
+                        <th>Предмет</th>
+                        <th>Начало</th>
+                        <th>Конец</th>
+                        <th>Аудитория</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for class_name, subject, start_time, end_time, classroom in schedule %}
+                    <tr>
+                        <td>{{ class_name }}</td>
+                        <td>{{ subject }}</td>
+                        <td>{{ start_time }}</td>
+                        <td>{{ end_time }}</td>
+                        <td>{{ classroom }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Нет занятий на сегодня</p>
+        {% endif %}
+    {% endfor %}
+{% endif %}
 {% endblock %}

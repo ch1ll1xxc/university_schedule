@@ -7,7 +7,7 @@
     <table class="table">
         <thead>
             <tr>
-                {% for column in columns %}
+                {% for column in translated_columns %}
                     <th>{{ column }}</th>
                 {% endfor %}
                 <th>Действия</th> <!-- Добавляем колонку для действий -->
@@ -21,7 +21,7 @@
                     {% endfor %}
                     <td>
                         <a href="{{ url_for('edit_record', table_name=table_name, record_id=row[0]) }}" class="btn btn-warning btn-sm">Редактировать</a>
-                        <a href="{{ url_for('delete_record', table_name=table_name, record_id=row[0]) }}" class="btn btn-danger btn-sm">Удалить</a>
+                        <a href="{{ url_for('confirm_delete', table_name=table_name, record_id=row[0]) }}" class="btn btn-danger btn-sm">Удалить</a>
                     </td>
                 </tr>
             {% endfor %}
